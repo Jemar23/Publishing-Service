@@ -1,0 +1,22 @@
+@startuml
+actor client
+participant LoadBalancer
+participant RemoveBookFromCatalogActivity
+participant CatalogDao
+database DynamoDB
+
+' Sequence
+
+client -> LoadBalancer : HTTP request
+LoadBalancer -> RemoveBookFromCatalogActivity : execute(RemoveBookFromCatalogRequest)
+
+alt if if bookId does not exist or book is not active
+  LoadBalancer <-- CatalogDao : throw BookNotFoundException
+  LoadBalancer <-- RemoveBookFromCatalogActivity : transform to kindlePublishingClientException
+  client <-- LoadBalancer : 400 Response
+end
+
+RemoveBookFromCatalogActivity --> LoadBalancer : return RemoveBookFromCatalogResponse
+RemoveBookFromCatalogActivity --> DynamoDB : removeBookFromCatalog(RemoveBookFromCatalogRequest)
+
+@enduml
